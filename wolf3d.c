@@ -4,6 +4,7 @@
 #define PI 3.1415926535
 #define P2 PI/2
 #define P3 3*PI/2
+#define DR 0.0174533 //one degree in radian
 
 float px,py,pdx,pdy,pa; //player position
 
@@ -63,9 +64,16 @@ float dist(float ax, float ay, float bx, float by, float ang)
 void drawRays3D()
 {
 	int r,mx,my,mp,dof;
-	float rx,ry,ra,xo,yo;
-	ra=pa;
-	for (r=0;r<1;r++)
+	float rx,ry,ra,xo,yo,disT;
+	ra=pa-DR*30;
+	if(ra<0){
+		 ra+= 2*PI;
+	}
+	if(ra>2*PI) {
+		 ra-=2*PI;
+	}
+	
+	for (r=0;r<60;r++) //60 rays, value can be increased or decreased
 	{
 		
 		//HORIZONTAL RAYS
@@ -80,7 +88,7 @@ void drawRays3D()
 			mx=(int)(rx)>>6;
 			my=(int)(ry)>>6;
 			mp=my*mapX+mx;
-			if(mp>0 && mp<mapX*mapY && map[mp]==1){ hx=rx; hy=ry; disH=dist(px,py,hx,hy,ra); dof=8;} //hit wall.
+			if(mp>0 && mp<mapX*mapY && map[mp]==1){ hx=rx; hy=ry; disH=dist(px,py,hx,hy,ra); dof=8;} //hit vall.
 			else{ rx+=xo; ry+= yo; dof+=1;}
 		}
 		/*
@@ -108,14 +116,36 @@ void drawRays3D()
 			if(mp>0 && mp<mapX*mapY && map[mp]==1){ vx=rx; vy=ry; disV=dist(px,py,vx,vy,ra); dof=8;} //hit wall.
 			else{ rx+=xo; ry+= yo; dof+=1;}
 		}
-		if(disV<disH) {rx=vx; ry=vy;}
-		if (disH<disV){rx=hx; ry=hy;}
-		glColor3f(1,0,0);
-		glLineWidth(1);
+		if(disV<disH){rx=vx; ry=vy; disT=disV; glColor3f(0.9,0,0);}
+		if(disH<disV){rx=hx; ry=hy;disT=disH; glColor3f(0.6,0,0);}
+		
+		
+		
+		glLineWidth(3);
 		glBegin(GL_LINES);
 		glVertex2i(px,py);
 		glVertex2i(rx,ry);
 		glEnd();
+		
+		//--------3D WALLS--------
+		
+		float ca=pa-ra; if(ra<0){ra+=2*PI;} if(ra>2*PI){ra-=2*PI;} disT=disT*cos(ca);
+		float lineH=(mapS*320)/disT;
+		
+		if(lineH>320){    //Line Height
+			lineH=320;
+		}
+		float lineO=160-lineH/2;  //line Offset
+		glLineWidth(8);
+		glBegin(GL_LINES);
+		glVertex2i(r*8+530,lineO);
+		glVertex2i(r*8+530,lineH+lineO);
+		glEnd();
+		
+		
+		ra+=DR;
+		if(ra<0){ra+= 2*PI;}
+		if(ra>2*PI){ra-=2*PI;}
 	}	
 	
 	
