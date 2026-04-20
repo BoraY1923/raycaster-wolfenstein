@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "Textures/T_1.h"
+#include "Textures/end.h"
+#include "Textures/start.h"
 
 typedef struct {
 	int w,a,d,s;
@@ -263,6 +266,7 @@ int mapC[]=
 	0,0,0,0,0,0,0,0,
 };
 
+/*
 void drawMap2D()
 {
 	int x,y,xo,yo;
@@ -283,6 +287,7 @@ void drawMap2D()
 		}
 	}
 }
+*/
 
 float dist(float ax, float ay, float bx, float by, float ang)
  {
@@ -301,7 +306,7 @@ void drawRays3D()
 		 ra-=2*PI;
 	}
 	
-	for (r=0;r<60;r++) //60 rays, value can be increased or decreased
+	for (r=0;r<105;r++) //60 rays, value can be increased or decreased !!!!!!!!!
 	{
 		//Vertical and horizontal map texture numbers 
 		int vmt=0;
@@ -324,16 +329,7 @@ void drawRays3D()
 			if(mp>0 && mp<mapX*mapY && mapW[mp]>0){ hmt=mapW[mp]-1; hx=rx; hy=ry; disH=dist(px,py,hx,hy,ra); dof=8;} //hit vall.
 			else{ rx+=xo; ry+= yo; dof+=1;}
 		}
-		/*
-		glColor3f(0,1,0);
-		glLineWidth(7);
-		glBegin(GL_LINES);
-		glVertex2i(px,py);
-		glVertex2i(rx,ry);
-		glEnd();
-		*/
-		
-		
+
 		//VERTICAL RAYS
 		float disV=1000000, vx=px,vy=py;
 		dof=0;
@@ -354,30 +350,31 @@ void drawRays3D()
 		if(disV<disH){  hmt=vmt; shade=0.6; rx=vx; ry=vy; disT=disV; glColor3f(0.9,0,0);}
 		if(disH<disV){rx=hx; ry=hy;disT=disH; glColor3f(0.6,0,0);}
 		
-		
-		
+/* This draws the rays on the 2D map	
+	
 		glLineWidth(3);
 		glBegin(GL_LINES);
 		glVertex2i(px,py);
 		glVertex2i(rx,ry);
 		glEnd();
-		
+*/	
 		//--------3D WALLS--------
 		
 		float ca=pa-ra; if(ra<0){ra+=2*PI;} if(ra>2*PI){ra-=2*PI;} disT=disT*cos(ca);
-		float lineH=(mapS*320)/disT;
+		float lineH=(mapS*640)/disT;
 		float ty_step=32.0/(float)lineH;
 		float ty_off=0;
-		if(lineH>320){ ty_off=(lineH-320)/2.0; lineH=320;}
-		float lineO=160-lineH/2;  //line Offset
+		if(lineH>640){ ty_off=(lineH-640)/2.0; lineH=640;}
+		float lineO=320-lineH/2;  //line Offset
 		
 		int y;
-		float ty=ty_off*ty_step+hmt*32;
+		float ty=ty_off*ty_step; //+hmt*32;
 		float tx;
   		if(shade==1){ tx=(int)(rx/2.0)%32; if(ra>180){ tx=31-tx;}}  
   		else        { tx=(int)(ry/2.0)%32; if(ra>90 && ra<270){ tx=31-tx;}}
 		for(y=0;y<lineH;y++){
-			
+		
+		/*	
 			float c = All_Textures[(int)(ty)*32 + (int)(tx)]*shade;
 			if(hmt==0) {glColor3f(c     ,c/2.0,c/2.0);}
 			if(hmt==1) {glColor3f(c     ,c    ,c/2.0);}
@@ -389,6 +386,13 @@ void drawRays3D()
 			glBegin(GL_POINTS);
 			glVertex2i(r*8+530,y+lineO);
 			glEnd();
+		*/	
+			int pixel =((int)ty*32+(int)tx)*3;
+			int red   = T_1[pixel+0]*shade;
+			int green = T_1[pixel+1]*shade;
+			int blue  = T_1[pixel+2]*shade;
+			
+			glPointSize(16); glColor3ub(red,green,blue); glBegin(GL_POINTS); glVertex2i(r*16,y+lineO); glEnd();
 			ty+=ty_step;
 		}
 
@@ -398,10 +402,10 @@ void drawRays3D()
 		float cosRa = cos(ra);
 		float sinRa = sin(ra);
 
-		for(y = lineO + lineH; y < 320; y++)
+		for(y = lineO + lineH; y < 640; y++)
 		{
-    			float dy = y - 160.0; 
-    			float weight = (160.0 * 32.0) / (dy * raFix);
+    			float dy = y - 324.0; 
+    			float weight = (320.0 * 32.0) / (dy * raFix);
     			float tx = px/2.0 + cosRa * weight;
     			float ty = py/2.0 + sinRa * weight;
 
@@ -413,13 +417,13 @@ void drawRays3D()
     		int floorTex = mapF[mapPos] * 1024; // 32*32 = 1024
     		float cF = All_Textures[pixelY * 32 + pixelX + floorTex] * 0.7;
     		glColor3f(cF/1.3, cF/1.3, cF); 
-    		glPointSize(8); glBegin(GL_POINTS); glVertex2i(r*8+530, y); glEnd();
+    		glPointSize(16); glBegin(GL_POINTS); glVertex2i(r*16, y); glEnd();
 
     														// --- DRAW CEILING ---
     		int ceilTex = mapC[mapPos] * 1024;
     		float cC = All_Textures[pixelY * 32 + pixelX + ceilTex] * 0.7;
     		glColor3f(cC/2.0, cC/1.2, cC/2.0);
-   		glPointSize(8); glBegin(GL_POINTS); glVertex2i(r*8+530, 319-y); glEnd();
+   		glPointSize(16); glBegin(GL_POINTS); glVertex2i(r*16, 639-y); glEnd();
 }
 		
 		
@@ -466,14 +470,28 @@ void ButtonUp(unsigned char key, int x, int y){
 	glutPostRedisplay();
 }
 
-void resize(int w, int h) {
-	glutReshapeWindow(1024,512);
+void screen(int v) {
+	int x,y;
+	int *T;
+	if(v==1) {T=start;} //Get Psyched!
+	if(v==2) {T=end;} //losing screen
+	//if(v==3) {}
+	for(y=0;y<640;y++){
+		for(x=0;x<960;x++){
+			int pixel =(y*960+x)*3;
+			int red   = T[pixel+0];
+			int green = T[pixel+1];
+			int blue  = T[pixel+2];
+			glPointSize(1); glColor3ub(red,green,blue); glBegin(GL_POINTS); glVertex2i(x,y); glEnd();
+			
+		}
+	}
 }
 
 void init()
 {
 	glClearColor(0.3,0.3,0.3,0);
-	gluOrtho2D(0,1024,512,0);
+	
 	px=300;
 	py=300;
 	pdx=cos(pa)*5;
@@ -484,6 +502,8 @@ void init()
 float frame1,frame2,fps; 
 
 
+int gameState = 0;
+int timer = 0;
 
 void display()
 {
@@ -491,12 +511,33 @@ void display()
 	frame2=glutGet(GLUT_ELAPSED_TIME);
 	fps = (frame2-frame1);
 	frame1 = glutGet(GLUT_ELAPSED_TIME);
+	glClear (GL_COLOR_BUFFER_BIT);
 	
 	//Frame time cap, just in case
 	if(fps > 100) {
 		fps = 100;
 	}
 	
+	//gameState
+	
+	if(gameState == 0){                  //init game
+		init();
+		timer = 0;
+		gameState = 1;
+	};
+			                //start the game
+	if(gameState == 1){
+		screen(2);
+		timer+=1*fps;
+		if(timer>3000){
+			timer = 0; 
+			gameState = 2;
+		}
+	}
+	
+	if(gameState == 2) {                   
+		
+			
 	// || Buttons ||
 	//The sensitivity is a bit of a mess but works well
 	if(Keys.a==1) { pa-=0.003*fps; if(pa<   0){ pa+=2*PI;} pdx=cos(pa) *5; pdy=sin(pa)*5;}
@@ -526,24 +567,34 @@ void display()
 	}
 	
 	
+	
+	
+	
+	
+	
+//	drawMap2D();
+//	drawPlayer();
+	drawRays3D();	
+	}
+	
 	glutPostRedisplay();
-	
-	
-	glClear (GL_COLOR_BUFFER_BIT);
-	drawMap2D();
-	drawPlayer();
-	drawRays3D();
 	glutSwapBuffers();
+
 	
+}
+
+void resize(int w, int h) {
+	glutReshapeWindow(960,640);
 }
 
 int main(int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowSize(1024, 512);
-	glutInitWindowPosition(200,200);
+	glutInitWindowSize(960, 640);
+	glutInitWindowPosition(glutGet(GLUT_SCREEN_WIDTH)/2-960/2, glutGet(GLUT_SCREEN_HEIGHT)/2-640/2);
 	glutCreateWindow("Wolfenstein");
+	gluOrtho2D(0,960,640,0);
 	init();
 	glutDisplayFunc(display);
 	glutReshapeFunc(resize);
